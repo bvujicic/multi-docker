@@ -1,0 +1,21 @@
+sudo: required
+services:
+    - docker
+
+before_install:
+    - docker build -t bvujicic/client-test -f ./client/Dockerfile.dev ./client
+
+script:
+    - docker run -e CI=true bvujicic/client-test npm test -- --coverage
+
+after_success:
+    - docker build -t bvujicic/multi-client ./client
+    - docker build -t bvujicic/multi-nginx ./nginx
+    - docker build -t bvujicic/multi-server ./server
+    - docker build -t bvujicic/multi-worker ./worker
+
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+    - docker push bvujicic/multi-client
+    - docker push bvujicic/multi-nginx
+    - docker push bvujicic/multi-server
+    - docker push bvujicic/multi-worker
